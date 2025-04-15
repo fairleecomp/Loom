@@ -52,9 +52,11 @@ class RecordingViewController: UIViewController {
     func stopRecording() {
         audioRecorder?.stop()
         audioRecorder = nil
-        
         print("Recording stopped.")
         
-        // Optionally, add the recording to your RecordingManager for display in saved recordings.
+        // Once the recording stops, assign it to the mixer.
+        if let url = recordedFileURL {
+            MixerManager.shared.assignRecording(url: url)
+        }
     }
 }
