@@ -62,6 +62,19 @@
                                 <color key="shadowColor" systemColor="tintColor"/>
                                 <size key="shadowOffset" width="-2" height="0.0"/>
                             </label>
+                            <slider opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="ReG-iX-5iM">
+                                <rect key="frame" x="137" y="357" width="118" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </slider>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="BPM" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="3" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jWO-Az-D9O">
+                                <rect key="frame" x="125" y="287" width="142" height="62"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" name="STIXTwoMath-Regular" family="STIX Two Math" pointSize="51"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="highlightedColor" red="0.90508215209999998" green="0.25372905140000002" blue="0.22918125119999999" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                <color key="shadowColor" systemColor="systemRedColor"/>
+                                <size key="shadowOffset" width="-1" height="1"/>
+                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="I6O-Tf-GL4"/>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -76,6 +89,8 @@
                     <navigationItem key="navigationItem" id="HcV-k2-5yA"/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
+                        <outlet property="bpmLabel" destination="jWO-Az-D9O" id="7ET-Kb-CFG"/>
+                        <outlet property="bpmSlider" destination="ReG-iX-5iM" id="HQU-wn-NVe"/>
                         <outlet property="recordButton" destination="Hej-3B-ePS" id="ba1-42-O2F"/>
                         <outlet property="view" destination="Hej-3B-ePS" id="1KB-V7-uEc"/>
                     </connections>
@@ -226,6 +241,9 @@
         </systemColor>
         <systemColor name="systemCyanColor">
             <color red="0.1960784314" green="0.67843137249999996" blue="0.90196078430000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </systemColor>
+        <systemColor name="systemRedColor">
+            <color red="1" green="0.23137254900000001" blue="0.18823529410000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="tintColor">
             <color red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
