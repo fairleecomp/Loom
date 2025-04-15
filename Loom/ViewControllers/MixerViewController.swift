@@ -3,12 +3,20 @@ import AVFoundation
 
 class MixerViewController: UIViewController {
     
+    enum TrackState: String {
+        case empty = "Empty"
+        case recording = "Recording"
+        case playing = "Playing"
+    }
+    
+    // A dictionary to store the current state of each track, keyed by track number.
+    var trackStates: [Int: TrackState] = [:]
+    
     // Dictionary to store the mute state for each track (1...8)
     var trackMuteStates: [Int: Bool] = [:]
     
-    // Dictionary to keep references to each track’s UI controls:
-    // We'll now store a mute button and a status indicator view.
-    var trackControls: [Int: (muteButton: UIButton, statusIndicator: UIView)] = [:]
+    // Dictionary to keep references to each track’s UI controls (mute button and status indicator as UIImageView)
+    var trackControls: [Int: (muteButton: UIButton, statusIndicator: UIImageView)] = [:]
     
     // Bottom row height constraints for each track (for toggling extra controls)
     var trackBottomHeightConstraints: [Int: NSLayoutConstraint] = [:]
@@ -26,41 +34,42 @@ class MixerViewController: UIViewController {
         setupMixerUI()
         setupBottomButtons()
         updateTrackStatuses()
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(updateTrackStatuses),
+                                               name: NSNotification.Name("MixerManagerUpdated"),
+                                               object: nil)
     }
     
     // MARK: - Setup Methods
     
     func setupMixerUI() {
-        // Create a vertical stack to hold the track rows.
         let mainStack = UIStackView()
         mainStack.axis = .vertical
         mainStack.spacing = 20
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mainStack)
         
-        // Constrain mainStack to the safe area. Let its height be determined by content.
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
             mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10)
         ])
         
-        // Create 8 track rows.
         for i in 1...8 {
             let trackRow = createTrackRow(for: i)
             mainStack.addArrangedSubview(trackRow)
             trackMuteStates[i] = false
         }
     }
-    // MARK: - TRACK ROW
+    
+    //  MARK: - Track Row
     func createTrackRow(for trackNumber: Int) -> UIView {
-        // Main vertical stack for this track row.
         let rowStack = UIStackView()
         rowStack.axis = .vertical
         rowStack.spacing = 8
         rowStack.translatesAutoresizingMaskIntoConstraints = false
-
-        // Top Row (always visible): holds label, mute, clear, and status indicator.
+        
+        // Top Row
         let topRow = UIStackView()
         topRow.axis = .horizontal
         topRow.spacing = 16
@@ -74,103 +83,96 @@ class MixerViewController: UIViewController {
         topRow.layer.shadowOpacity = 0.1
         topRow.layer.shadowOffset = CGSize(width: 0, height: 2)
         topRow.layer.shadowRadius = 4
-        topRow.tag = trackNumber  // Use tag to identify track
-
+        topRow.tag = trackNumber
+        
         let trackLabel = UILabel()
-        trackLabel.text = "Track \(trackNumber)"
+        trackLabel.text = "| \(trackNumber)"
         trackLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-
+        
         let muteButton = UIButton(type: .system)
-        muteButton.setTitle("Mute", for: .normal)
+        muteButton.setImage(UIImage(systemName: "speaker.wave.3"), for: .normal)
         muteButton.tag = trackNumber
         muteButton.addTarget(self, action: #selector(toggleMute(_:)), for: .touchUpInside)
-        muteButton.backgroundColor = UIColor.systemBlue
+        muteButton.backgroundColor = UIColor.systemIndigo
         muteButton.setTitleColor(.white, for: .normal)
         muteButton.layer.cornerRadius = 5
         muteButton.clipsToBounds = true
-
+        
         let clearButton = UIButton(type: .system)
-        clearButton.setTitle("Clear", for: .normal)
+        clearButton.setImage(UIImage(systemName: "aqi.low"), for: .normal)
         clearButton.tag = trackNumber
         clearButton.addTarget(self, action: #selector(clearTrack(_:)), for: .touchUpInside)
         clearButton.backgroundColor = UIColor.systemRed
         clearButton.setTitleColor(.white, for: .normal)
         clearButton.layer.cornerRadius = 5
         clearButton.clipsToBounds = true
-
-        let statusIndicator = UIView()
+        
+        let statusIndicator = UIImageView()
         statusIndicator.translatesAutoresizingMaskIntoConstraints = false
-        let isOccupied = MixerManager.shared.tracks[trackNumber - 1] != nil
-        statusIndicator.backgroundColor = isOccupied ? UIColor.systemGreen : UIColor.lightGray
-        statusIndicator.layer.cornerRadius = 6  // For a 12x12 circle
-        statusIndicator.clipsToBounds = true
-
+        statusIndicator.contentMode = .scaleAspectFit
+        if MixerManager.shared.tracks[trackNumber - 1] != nil {
+            statusIndicator.image = UIImage(systemName: "inset.filled.circle.dashedplay")
+        } else {
+            statusIndicator.image = UIImage(systemName: "circle.dashed")
+        }
+        
         topRow.addArrangedSubview(trackLabel)
         topRow.addArrangedSubview(muteButton)
         topRow.addArrangedSubview(clearButton)
         topRow.addArrangedSubview(statusIndicator)
-
+        
         muteButton.widthAnchor.constraint(equalToConstant: 70).isActive = true
         clearButton.widthAnchor.constraint(equalToConstant: 70).isActive = true
         NSLayoutConstraint.activate([
             statusIndicator.widthAnchor.constraint(equalToConstant: 12),
             statusIndicator.heightAnchor.constraint(equalToConstant: 12)
         ])
-
-        // Add a tap gesture to topRow to toggle fader controls.
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(toggleTrackOptions(_:)))
         topRow.isUserInteractionEnabled = true
         topRow.addGestureRecognizer(tapGesture)
-
-        // Bottom Row (volume and pan sliders)
+        
+        // Bottom Row (faders)
         let bottomRow = UIStackView()
         bottomRow.axis = .horizontal
         bottomRow.spacing = 10
         bottomRow.alignment = .center
         bottomRow.distribution = .fillEqually
         bottomRow.translatesAutoresizingMaskIntoConstraints = false
-
+        
         let volumeSlider = UISlider()
         volumeSlider.minimumValue = 0.0
         volumeSlider.maximumValue = 1.0
         volumeSlider.value = 1.0
         volumeSlider.tag = trackNumber
         volumeSlider.addTarget(self, action: #selector(volumeSliderChanged(_:)), for: .valueChanged)
-
+        
         let panSlider = UISlider()
         panSlider.minimumValue = -1.0
         panSlider.maximumValue = 1.0
         panSlider.value = 0.0
         panSlider.tag = trackNumber
         panSlider.addTarget(self, action: #selector(panSliderChanged(_:)), for: .valueChanged)
-
+        
         bottomRow.addArrangedSubview(volumeSlider)
         bottomRow.addArrangedSubview(panSlider)
-
-        // Collapse bottomRow using a height constraint.
+        
         let bottomHeightConstraint = bottomRow.heightAnchor.constraint(equalToConstant: 0)
         bottomHeightConstraint.isActive = true
-        // Also explicitly hide the bottom row to ensure it's not visible initially.
         bottomRow.isHidden = true
         trackBottomHeightConstraints[trackNumber] = bottomHeightConstraint
-
-        // Add topRow and bottomRow to rowStack.
+        
         rowStack.addArrangedSubview(topRow)
         rowStack.addArrangedSubview(bottomRow)
-
-        // Fix the top row height.
+        
         topRow.heightAnchor.constraint(equalToConstant: 40).isActive = true
-
-        // Save control references.
+        
         trackControls[trackNumber] = (muteButton: muteButton, statusIndicator: statusIndicator)
-
-        // Optionally set a fixed overall rowStack height if desired (or let it be determined by content).
-        // rowStack.heightAnchor.constraint(equalToConstant: 80).isActive = true
-
+        
         return rowStack
     }
     
-    // MARK: - Instance Methods for UI Actions
+    // MARK: - Action Methods
     
     @objc func toggleMute(_ sender: UIButton) {
         let trackNumber = sender.tag
@@ -181,10 +183,10 @@ class MixerViewController: UIViewController {
         let isMuted = trackMuteStates[trackNumber] ?? false
         if isMuted {
             player.play()
-            sender.setTitle("Mute", for: .normal)
+            sender.setImage(UIImage(systemName: "speaker.wave.3"), for: .normal)
         } else {
             player.pause()
-            sender.setTitle("Unmute", for: .normal)
+            sender.setImage(UIImage(systemName: "speaker.slash.fill"), for: .normal)
         }
         trackMuteStates[trackNumber] = !isMuted
         updateTrackStatuses()
@@ -194,8 +196,8 @@ class MixerViewController: UIViewController {
         let trackNumber = sender.tag
         MixerManager.shared.clearTrack(at: trackNumber - 1)
         if let controls = trackControls[trackNumber] {
-            controls.statusIndicator.backgroundColor = UIColor.lightGray
-            controls.muteButton.setTitle("Mute", for: .normal)
+            controls.statusIndicator.image = UIImage(systemName: "circle")
+            controls.muteButton.setImage(UIImage(systemName: "speaker.wave.3"), for: .normal)
         }
         trackMuteStates[trackNumber] = false
         updateTrackStatuses()
@@ -225,14 +227,12 @@ class MixerViewController: UIViewController {
               let bottomHeightConstraint = trackBottomHeightConstraints[topRow.tag] else { return }
         
         if bottomRow.isHidden {
-            // Expand: unhide and animate height to 44.
             bottomRow.isHidden = false
             bottomHeightConstraint.constant = 44
             UIView.animate(withDuration: 0.3) {
                 rowStack.layoutIfNeeded()
             }
         } else {
-            // Collapse: animate height to 0 then hide.
             bottomHeightConstraint.constant = 0
             UIView.animate(withDuration: 0.3, animations: {
                 rowStack.layoutIfNeeded()
@@ -241,10 +241,10 @@ class MixerViewController: UIViewController {
             }
         }
     }
+    
     // MARK: - Bottom Buttons Setup
     
     func setupBottomButtons() {
-        // Create a horizontal stack view for both New Mix and Save Mix buttons.
         let buttonStack = UIStackView()
         buttonStack.axis = .horizontal
         buttonStack.spacing = 20
@@ -253,7 +253,6 @@ class MixerViewController: UIViewController {
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(buttonStack)
         
-        // Configure Save Mix button.
         var saveConfig = UIButton.Configuration.filled()
         saveConfig.title = "Save Mix"
         saveConfig.image = UIImage(systemName: "square.and.arrow.down")
@@ -267,10 +266,9 @@ class MixerViewController: UIViewController {
         saveMixButton.clipsToBounds = true
         saveMixButton.addTarget(self, action: #selector(saveMixPressed), for: .touchUpInside)
         
-        // Configure New Mix button.
         var newConfig = UIButton.Configuration.filled()
-        newConfig.title = "New Mix"
-        newConfig.image = UIImage(systemName: "plus.circle.fill")
+        newConfig.title = "Clear Tracks"
+        newConfig.image = UIImage(systemName: "slider.horizontal.2.arrow.trianglehead.counterclockwise")
         newConfig.imagePadding = 8
         newConfig.baseBackgroundColor = UIColor.systemOrange
         newConfig.baseForegroundColor = UIColor.white
@@ -287,8 +285,8 @@ class MixerViewController: UIViewController {
         NSLayoutConstraint.activate([
             buttonStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             buttonStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            buttonStack.widthAnchor.constraint(equalToConstant: 320),  // Adjust width as needed
-            buttonStack.heightAnchor.constraint(equalToConstant: 80)   // Adjust height as needed
+            buttonStack.widthAnchor.constraint(equalToConstant: 320),
+            buttonStack.heightAnchor.constraint(equalToConstant: 80)
         ])
     }
     
@@ -296,9 +294,28 @@ class MixerViewController: UIViewController {
     
     @objc func updateTrackStatuses() {
         for (trackNumber, controls) in trackControls {
-            let isOccupied = MixerManager.shared.tracks[trackNumber - 1] != nil
-            controls.statusIndicator.backgroundColor = isOccupied ? UIColor.systemGreen : UIColor.lightGray
-            print("Track \(trackNumber) is \(isOccupied ? "Active" : "Empty")")
+            let index = trackNumber - 1
+            
+            // Set the state: if no player exists, it's empty; otherwise, it's playing.
+            if MixerManager.shared.tracks[index] == nil {
+                trackStates[trackNumber] = .empty
+            } else {
+                trackStates[trackNumber] = .playing
+            }
+            
+            // Update the status indicator image based on state and mute status.
+            if trackStates[trackNumber] == .empty {
+                controls.statusIndicator.image = UIImage(systemName: "circle.dashed")
+            } else {
+                // Even though the state is .playing, if the track is muted, display a muted icon.
+                if let isMuted = trackMuteStates[trackNumber], isMuted {
+                    controls.statusIndicator.image = UIImage(systemName: "inset.filled.circle.dashed")
+                } else {
+                    controls.statusIndicator.image = UIImage(systemName: "inset.filled.circle.dashed")
+                }
+            }
+            
+            print("Track \(trackNumber) is \(trackStates[trackNumber]!.rawValue)")
         }
     }
     
@@ -310,8 +327,8 @@ class MixerViewController: UIViewController {
             MixerManager.shared.clearTrack(at: i)
             let trackNumber = i + 1
             if let controls = trackControls[trackNumber] {
-                controls.statusIndicator.backgroundColor = UIColor.lightGray
-                controls.muteButton.setTitle("Mute", for: .normal)
+                controls.statusIndicator.image = UIImage(systemName: "circle")
+                controls.muteButton.setImage(UIImage(systemName: "speaker.wave.3"), for: .normal)
             }
             trackMuteStates[trackNumber] = false
         }
@@ -411,5 +428,9 @@ class MixerViewController: UIViewController {
             print("Export failed: \(error)")
             return nil
         }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }

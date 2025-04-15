@@ -54,9 +54,19 @@ class RecordingViewController: UIViewController {
         audioRecorder = nil
         print("Recording stopped.")
         
-        // Once the recording stops, assign it to the mixer.
-        if let url = recordedFileURL {
-            MixerManager.shared.assignRecording(url: url)
+        
+            
+            // When stopping the recording:
+            if let url = recordedFileURL {
+                // Assume the recording is assigned to a particular track.
+                // If you know the track number (say track 1 for simplicity):
+                
+                MixerManager.shared.assignRecording(url: url)
+                
+                // Update the state to playing for that track.
+                // (Alternatively, you might update the state from within MixerManager's assignRecording method.)
+                NotificationCenter.default.post(name: NSNotification.Name("MixerManagerUpdated"), object: nil)
+            }
         }
     }
-}
+

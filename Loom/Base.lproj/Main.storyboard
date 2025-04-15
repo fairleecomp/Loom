@@ -32,12 +32,14 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="769"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Hej-3B-ePS">
+                            <button opaque="NO" alpha="0.90000000000000002" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Hej-3B-ePS">
                                 <rect key="frame" x="98" y="547" width="196" height="167"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="167" id="QGU-ZZ-l96"/>
                                     <constraint firstAttribute="width" secondItem="Hej-3B-ePS" secondAttribute="height" multiplier="260:111" constant="-195.17117117117118" id="qfr-zp-e2l"/>
                                 </constraints>
+                                <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
                                 <state key="normal">
                                     <color key="titleColor" systemColor="labelColor"/>
@@ -45,10 +47,8 @@
                                     <preferredSymbolConfiguration key="preferredSymbolConfiguration" scale="large"/>
                                 </state>
                                 <buttonConfiguration key="configuration" style="filled" cornerStyle="capsule">
-                                    <imageReference key="image" image="microphone" catalog="system" symbolScale="large" variableValue="1"/>
+                                    <imageReference key="image" image="timelapse" catalog="system" symbolScale="large" variableValue="1"/>
                                     <preferredSymbolConfiguration key="preferredSymbolConfigurationForImage" scale="large"/>
-                                    <color key="baseForegroundColor" systemColor="labelColor"/>
-                                    <color key="baseBackgroundColor" red="0.90508215206185572" green="0.25372905141400209" blue="0.22918125123425809" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                 </buttonConfiguration>
                                 <connections>
                                     <action selector="recordButtonTapped:" destination="dKx-I8-niX" eventType="touchUpInside" id="JEh-XC-NMx"/>
@@ -151,11 +151,11 @@
             </objects>
             <point key="canvasLocation" x="88" y="-1432"/>
         </scene>
-        <!--Saved Recordings-->
+        <!--Recordings-->
         <scene sceneID="s6W-Is-Dgo">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="cWC-99-3Fn" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Saved Recordings" image="pencil" catalog="system" id="hbJ-Z8-HyF"/>
+                    <tabBarItem key="tabBarItem" title="Recordings" image="pencil" catalog="system" selectedImage="pencil.and.scribble" id="hbJ-Z8-HyF"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="Q25-rT-lZY">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>
@@ -174,7 +174,7 @@
         <scene sceneID="jv5-Rs-y7l">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="d5F-EC-ikb" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Record" image="waveform.and.mic" catalog="system" id="h1X-5B-qh6"/>
+                    <tabBarItem key="tabBarItem" title="Record" image="waveform.circle" catalog="system" selectedImage="waveform.circle.fill" id="h1X-5B-qh6"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="Ghh-3O-HqO">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>
@@ -193,7 +193,7 @@
         <scene sceneID="U3t-RV-3JR">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="I8H-84-gRa" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Mixer" image="circle.grid.2x2" catalog="system" id="HcS-rm-AzD"/>
+                    <tabBarItem key="tabBarItem" title="Mixer" image="slider.horizontal.3" catalog="system" selectedImage="slider.horizontal.2.square.on.square" id="HcS-rm-AzD"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="4DT-Xy-opA">
                         <rect key="frame" x="0.0" y="59" width="393" height="44"/>
@@ -210,10 +210,14 @@
         </scene>
     </scenes>
     <resources>
-        <image name="circle.grid.2x2" catalog="system" width="128" height="111"/>
         <image name="microphone" catalog="system" width="110" height="128"/>
         <image name="pencil" catalog="system" width="128" height="113"/>
-        <image name="waveform.and.mic" catalog="system" width="128" height="126"/>
+        <image name="pencil.and.scribble" catalog="system" width="128" height="86"/>
+        <image name="slider.horizontal.2.square.on.square" catalog="system" width="128" height="116"/>
+        <image name="slider.horizontal.3" catalog="system" width="128" height="99"/>
+        <image name="timelapse" catalog="system" width="128" height="124"/>
+        <image name="waveform.circle" catalog="system" width="128" height="123"/>
+        <image name="waveform.circle.fill" catalog="system" width="128" height="123"/>
         <systemColor name="labelColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
