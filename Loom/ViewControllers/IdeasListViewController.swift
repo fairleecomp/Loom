@@ -62,6 +62,7 @@ class IdeasListViewController: UITableViewController {
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { _, _, completionHandler in
             RecordingManager.shared.deleteRecording(at: indexPath.row)
             completionHandler(true)
+            self.tableView.reloadData()
         }
 
         let editAction = UIContextualAction(style: .normal, title: "Edit") { _, _, completionHandler in
@@ -121,6 +122,11 @@ class IdeasListViewController: UITableViewController {
               let notesView = elements[1] as? UITextView else { return }
 
         let index = sender.tag
+        guard index >= 0 && index < RecordingManager.shared.recordings.count else {
+            print("❌ Index \(index) out of range")
+            self.dismiss(animated: true)
+            return
+        }
         let newTitle = titleField.text ?? ""
         let newNotes = notesView.text ?? ""
 

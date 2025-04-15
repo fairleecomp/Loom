@@ -19,6 +19,10 @@ class RecordingManager {
     }
 
     func deleteRecording(at index: Int) {
+        guard recordings.indices.contains(index) else {
+            print("❌ Tried to delete recording at invalid index: \(index)")
+            return
+        }
         recordings.remove(at: index)
         NotificationCenter.default.post(name: NSNotification.Name("RecordingsUpdated"), object: nil)
     }
