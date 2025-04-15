@@ -1,6 +1,6 @@
 import UIKit
 
-class MainContainerViewController: UIViewController {
+class MainContainerViewController: UIViewController, UIGestureRecognizerDelegate {
 
     // Child view controllers
     var recordingVC: RecordingViewController!
@@ -10,74 +10,78 @@ class MainContainerViewController: UIViewController {
     // Pan gesture recognizer
     var panGesture: UIPanGestureRecognizer!
     
-    // The fraction of the screen the side panel overlays when fully revealed.
+    // How much of the container’s width the side panels overlay when fully revealed.
     let overlayFraction: CGFloat = 0.5
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Instantiate child view controllers from Main.storyboard using their Storyboard IDs.
+        // Instantiate child view controllers from storyboard using their Storyboard IDs.
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         guard let recVC = storyboard.instantiateViewController(withIdentifier: "RecordingViewController") as? RecordingViewController,
               let mixVC = storyboard.instantiateViewController(withIdentifier: "MixerViewController") as? MixerViewController,
               let savedVC = storyboard.instantiateViewController(withIdentifier: "SavedRecordingsViewController") as? SavedRecordingsViewController
         else {
-            fatalError("One or more child view controllers could not be instantiated from the storyboard. Check your Storyboard IDs and custom classes.")
+            fatalError("One or more child view controllers could not be instantiated from the storyboard. Check your storyboard IDs and custom classes.")
         }
         
         recordingVC = recVC
         mixerVC = mixVC
         savedRecordingsVC = savedVC
+        mixerVC.view.translatesAutoresizingMaskIntoConstraints = true
+        savedRecordingsVC.view.translatesAutoresizingMaskIntoConstraints = true
         
-        // Add the central Recording VC – always visible.
+        // 1) Add the central Recording VC – always visible.
         addChild(recordingVC)
         recordingVC.view.frame = view.bounds
         view.addSubview(recordingVC.view)
         recordingVC.didMove(toParent: self)
         
-        // Add the Mixer VC, positioned off-screen to the right.
+        // 2) Add the Mixer VC off-screen to the right.
         addChild(mixerVC)
         let containerWidth = view.bounds.width
         mixerVC.view.frame = view.bounds.offsetBy(dx: containerWidth, dy: 0)
+        mixerVC.view.translatesAutoresizingMaskIntoConstraints = true  // Allow manual frame changes.
         view.addSubview(mixerVC.view)
         mixerVC.didMove(toParent: self)
         
-        // Add the Saved Recordings VC, positioned off-screen to the left.
+        // 3) Add the Saved Recordings VC off-screen to the left.
         addChild(savedRecordingsVC)
         savedRecordingsVC.view.frame = view.bounds.offsetBy(dx: -containerWidth, dy: 0)
+        savedRecordingsVC.view.translatesAutoresizingMaskIntoConstraints = true  // Allow manual frame changes.
         view.addSubview(savedRecordingsVC.view)
         savedRecordingsVC.didMove(toParent: self)
         
-        // Bring the central recording VC's view to the front.
+        // Make sure the recording interface is always on top.
         view.bringSubviewToFront(recordingVC.view)
         
-        // Add pan gesture recognizer to handle swipes.
+        // 4) Set up the pan gesture recognizer.
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        panGesture.delegate = self // Allow simultaneous gesture recognition.
         view.addGestureRecognizer(panGesture)
     }
     
     @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
         let translation = gesture.translation(in: view)
         let containerWidth = view.bounds.width
+        print("Pan translation.x: \(translation.x)")
         
         switch gesture.state {
         case .changed:
             if translation.x > 0 {
-                // Swipe right: reveal saved recordings (from left)
+                // Swiping right: reveal the saved recordings panel (from left)
                 let newX = min(-containerWidth + translation.x, 0)
                 savedRecordingsVC.view.frame.origin.x = newX
             } else if translation.x < 0 {
-                // Swipe left: reveal mixer (from right)
-                // Target position when fully revealed: containerWidth * (1 - overlayFraction)
+                // Swiping left: reveal the mixer panel (from right)
                 let targetX = containerWidth * (1 - overlayFraction)
                 let newX = max(containerWidth + translation.x, targetX)
                 mixerVC.view.frame.origin.x = newX
             }
             
         case .ended, .cancelled:
-            // When the pan ends, decide whether to snap in the side panel or retract it
             if translation.x > 0 {
-                // Saved Recordings side
+                // Decide for saved recordings.
                 if translation.x > containerWidth * 0.3 {
                     UIView.animate(withDuration: 0.3) {
                         self.savedRecordingsVC.view.frame.origin.x = 0
@@ -88,9 +92,9 @@ class MainContainerViewController: UIViewController {
                     }
                 }
             } else if translation.x < 0 {
-                // Mixer side
+                // Decide for mixer.
                 if abs(translation.x) > containerWidth * 0.3 {
-                    let targetX = containerWidth * (1 - self.overlayFraction)
+                    let targetX = containerWidth * (1 - overlayFraction)
                     UIView.animate(withDuration: 0.3) {
                         self.mixerVC.view.frame.origin.x = targetX
                     }
@@ -100,10 +104,16 @@ class MainContainerViewController: UIViewController {
                     }
                 }
             }
+            // Reset translation.
             gesture.setTranslation(.zero, in: view)
             
         default:
             break
         }
+    }
+    
+    // Allow simultaneous gesture recognition.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }

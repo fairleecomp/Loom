@@ -21,5 +21,7 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Needs access to record ideas</string>
 </dict>
 </plist>
