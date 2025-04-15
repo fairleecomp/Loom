@@ -8,6 +8,7 @@ class MainViewController: UIViewController, AVAudioPlayerDelegate, UITextViewDel
     @IBOutlet weak var saveButton: UIButton!
     @IBOutlet weak var notesTextView: UITextView!
     @IBOutlet weak var tagField: UITextField!
+    @IBOutlet weak var waveformView: WaveformView!
 
     // Audio
     var recorder: AVAudioRecorder?
@@ -84,18 +85,28 @@ class MainViewController: UIViewController, AVAudioPlayerDelegate, UITextViewDel
                         AVSampleRateKey: 12000,
                         AVNumberOfChannelsKey: 1,
                         AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue]
-
+        
+        
         do {
             recorder = try AVAudioRecorder(url: path, settings: settings)
             currentFileURL = path
+            recorder?.isMeteringEnabled = true
             recorder?.prepareToRecord()
             recorder?.record()
+
+            if let waveformView = waveformView {
+                waveformView.recorder = recorder
+                waveformView.startMonitoring()
+            } else {
+                print("❌ waveformView is nil")
+            }
         } catch {
             print("❌ Failed to start recording: \(error)")
         }
     }
 
     private func stopRecording() {
+        waveformView.stopMonitoring()
         recorder?.stop()
         recorder = nil
     }
